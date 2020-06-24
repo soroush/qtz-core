@@ -1,5 +1,4 @@
 #include "jalali-date.hpp"
-#include <QObject>
 
 int g_days_in_month[12] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 int j_days_in_month[12] = {31, 31, 31, 31, 31, 31, 30, 30, 30, 30, 30, 29};
