@@ -19,22 +19,31 @@ find_package(Qt5 COMPONENTS Core REQUIRED)
 # Include directories
 include_directories("include")
 
+# OS-dependent sources
+set(OS_SOURCES )
+if(WIN32)
+    list(APPEND OS_SOURCES QtzCore.rc)
+endif()
+
 # Define the library
 add_library (QtzCore SHARED
     src/settings.cpp
-    src/qtz-single-core-application.cpp
+    src/run-guard.cpp
     src/qio.cpp
     src/number-formatter.cpp
     src/jalali-date.cpp
     # Headers
     include/settings.hpp
-    include/qtz-single-core-application.hpp
-    include/qtz-single-core-application_p.hpp
+    include/run-guard.hpp
     include/qtz-core.hpp
     include/qio.hpp
     include/number-formatter.hpp
     include/jalali-date.hpp
-)
+    ${OS_SOURCES}
+    )
+
+# Add 'd' suffix to debug builds
+set_property(TARGET QtzCore PROPERTY DEBUG_POSTFIX d)
 
 # Set version
 set_target_properties(QtzCore PROPERTIES VERSION 0.4.1)
@@ -74,8 +83,3 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/QtzCore.pc DESTINATION ${CMAKE_INSTALL
 
 # Link againsg dependencies
 target_link_libraries(QtzCore Qt5::Core)
-
-# OS-specific links
-if(WIN32)
-target_link_libraries(QtzCore "Advapi32.lib")
-endif()
