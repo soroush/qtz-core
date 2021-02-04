@@ -16,17 +16,14 @@ endif()
 # Check for dependencies
 find_package(Qt5 COMPONENTS Core REQUIRED)
 
-# Include directories
-include_directories("include")
-
 # OS-dependent sources
 set(OS_SOURCES )
 if(WIN32)
-    list(APPEND OS_SOURCES QtzCore.rc)
+    list(APPEND OS_SOURCES ${PROJECT_NAME}.rc)
 endif()
 
 # Define the library
-add_library (QtzCore SHARED
+add_library (${PROJECT_NAME} SHARED
     src/settings.cpp
     src/run-guard.cpp
     src/qio.cpp
@@ -40,46 +37,64 @@ add_library (QtzCore SHARED
     include/number-formatter.hpp
     include/jalali-date.hpp
     ${OS_SOURCES}
-    )
+)
 
-# Add 'd' suffix to debug builds
-set_property(TARGET QtzCore PROPERTY DEBUG_POSTFIX d)
+# Set properties
+set_target_properties(${PROJECT_NAME} PROPERTIES 
+    PROPERTIES VERSION 0.4.1
+    PROPERTIES SOVERSION 0
+    CXX_STANDARD 11
+    DEBUG_POSTFIX "d"
+    DEFINE_SYMBOL "QTZ_CORE_LIBRARY"
+)
 
-# Set version
-set_target_properties(QtzCore PROPERTIES VERSION 0.4.1)
-set_target_properties(QtzCore PROPERTIES SOVERSION 0)
+target_include_directories(${PROJECT_NAME}
+    PUBLIC 
+        $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}> 
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    PRIVATE 
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
 
-# pkg-config
-configure_file(QtzCore.pc.in QtzCore.pc @ONLY)
-
-# Define symbol exporter
-target_compile_definitions(QtzCore PRIVATE -DQTZ_CORE_LIBRARY)
-target_compile_features(QtzCore PRIVATE cxx_std_11)
+# Link against dependencies
+target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core)
 
 # Install and export
 include(GNUInstallDirs)
-target_include_directories(QtzCore PUBLIC  
-    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>  
-    $<INSTALL_INTERFACE:include/>
+
+export(TARGETS ${PROJECT_NAME} FILE "${PROJECT_NAME}Targets.cmake")
+
+install(TARGETS ${PROJECT_NAME}
+    EXPORT "${PROJECT_NAME}Targets"
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
-install(DIRECTORY include/ DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qtz/core)
+install(DIRECTORY "include/" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qtz/core)
 
-install(TARGETS QtzCore
-    EXPORT QtzCoreConfig
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
-    RUNTIME  DESTINATION ${CMAKE_INSTALL_BINDIR}
-    PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+include(CMakePackageConfigHelpers)
 
-export(TARGETS QtzCore FILE QtzCoreConfig.cmake)
+write_basic_package_version_file(
+    "${PROJECT_NAME}ConfigVersion.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
 
-install(EXPORT QtzCoreConfig
-    FILE QtzCoreConfig.cmake
+install(EXPORT "${PROJECT_NAME}Targets"
+    FILE "${PROJECT_NAME}Targets.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/
     NAMESPACE Qtz::
-    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/)
+)
 
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/QtzCore.pc DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig)
+install(FILES "cmake/${PROJECT_NAME}Config.cmake" 
+    "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/
+)
 
-# Link againsg dependencies
-target_link_libraries(QtzCore Qt5::Core)
+# pkg-config
+configure_file("${PROJECT_NAME}.pc.in" "${PROJECT_NAME}.pc" @ONLY)
+
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc"
+    DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/pkgconfig
+)
