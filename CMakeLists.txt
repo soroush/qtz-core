@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.19.0)
 
 project(QtzCore VERSION 0.4.1 
     DESCRIPTION "Qtz Rapid Application Development Framework, Core Module"
@@ -8,10 +8,6 @@ project(QtzCore VERSION 0.4.1
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
-
-if(CMAKE_VERSION VERSION_LESS "3.7.0")
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-endif()
 
 # Check for dependencies
 find_package(Qt5 COMPONENTS Core REQUIRED)
@@ -40,21 +36,29 @@ add_library (QtzCore SHARED
     include/number-formatter.hpp
     include/jalali-date.hpp
     ${OS_SOURCES}
-    )
+)
 
-# Add 'd' suffix to debug builds
-set_property(TARGET QtzCore PROPERTY DEBUG_POSTFIX d)
-
-# Set version
-set_target_properties(QtzCore PROPERTIES VERSION 0.4.1)
-set_target_properties(QtzCore PROPERTIES SOVERSION 0)
+# Set properties
+set_target_properties(QtzCore PROPERTIES 
+    VERSION 0.4.1
+    SOVERSION 0
+    DEBUG_POSTFIX d
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED TRUE
+    DEFINE_SYMBOL QTZ_CORE_LIBRARY
+)
 
 # pkg-config
 configure_file(QtzCore.pc.in QtzCore.pc @ONLY)
 
-# Define symbol exporter
-target_compile_definitions(QtzCore PRIVATE -DQTZ_CORE_LIBRARY)
-target_compile_features(QtzCore PRIVATE cxx_std_11)
+# Copy headers for local builds
+if(QTZ_LOCAL_BUILD)
+add_custom_command(TARGET QtzCore POST_BUILD COMMAND 
+    ${CMAKE_COMMAND} -P 
+        "${CMAKE_CURRENT_LIST_DIR}/../cmake/copy_local_includes.cmake" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/" "core" "${QTZ_LOCAL_INCLUDES_DIR}")
+        file(COPY ${header_files} DESTINATION "${QTZ_LOCAL_INCLUDES_DIR}/qtz/${component}/" FOLLOW_SYMLINK_CHAIN)
+endif()
 
 # Install and export
 include(GNUInstallDirs)

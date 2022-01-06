@@ -312,20 +312,24 @@ QString JalaliDate::toString(const QString& format) const {
 
 QString JalaliDate::toString(Qt::DateFormat format) const {
     switch(format) {
-        case Qt::TextDate:
-            return toString("ddd MMM d yyyy");
-        case Qt::ISODate:
-            return toString("YYYY-MM-DD");
+        case Qt::SystemLocaleDate:
         case Qt::SystemLocaleShortDate:
-            return toString("YYYY-MM-DD");
-        case Qt::SystemLocaleLongDate:
-            return toString("dddd, MMMM dd, yyyy");
+        case Qt::LocaleDate:
         case Qt::DefaultLocaleShortDate:
             return toString("M/d/yyyy");
         case Qt::DefaultLocaleLongDate:
-            return toString("dddd, MMMM dd, yyyy");
+        case Qt::SystemLocaleLongDate:
+            return toString("dddd, MMMM d, yyyy");
         case Qt::RFC2822Date:
-            return toString("ddd MMM dd yyyy");
+            return toString("ddd MMM yyyy");
+#if QT_CONFIG(textdate)
+        case Qt::TextDate:
+            return toString("ddd MMM d yyyy");
+#endif
+        case Qt::ISODate:
+        case Qt::ISODateWithMs: 
+            // TODO: Implement ISO Date with milliseconds?
+            return toString("YYYY-MM-DD");
         default:
             return toString("ddd MMM d yyyy");
     }
