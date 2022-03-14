@@ -15,6 +15,7 @@ public:
     };
 
     explicit JalaliDate();
+    ~JalaliDate()=default;
     JalaliDate(int y, int m, int d);
     JalaliDate(const QDate&);
     JalaliDate(const JalaliDate&);

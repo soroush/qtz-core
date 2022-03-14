@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.1.0)
+cmake_minimum_required(VERSION 3.19.0)
 
 project(QtzCore VERSION 0.4.1 
     DESCRIPTION "Qtz Rapid Application Development Framework, Core Module"
@@ -8,10 +8,6 @@ project(QtzCore VERSION 0.4.1
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
-
-if(CMAKE_VERSION VERSION_LESS "3.7.0")
-    set(CMAKE_INCLUDE_CURRENT_DIR ON)
-endif()
 
 # Check for dependencies
 find_package(Qt5 COMPONENTS Core REQUIRED)
@@ -41,11 +37,13 @@ add_library (${PROJECT_NAME} SHARED
 
 # Set properties
 set_target_properties(${PROJECT_NAME} PROPERTIES 
-    PROPERTIES VERSION 0.4.1
-    PROPERTIES SOVERSION 0
-    CXX_STANDARD 11
-    DEBUG_POSTFIX "d"
-    DEFINE_SYMBOL "QTZ_CORE_LIBRARY"
+    VERSION 0.4.1
+    SOVERSION 0
+    DEBUG_POSTFIX d
+    CXX_STANDARD 17
+    CXX_STANDARD_REQUIRED TRUE
+    DEFINE_SYMBOL QTZ_CORE_LIBRARY
+    PUBLIC_HEADER "include/qtz-core.hpp"
 )
 
 target_include_directories(${PROJECT_NAME}
@@ -59,6 +57,15 @@ target_include_directories(${PROJECT_NAME}
 # Link against dependencies
 target_link_libraries(${PROJECT_NAME} PUBLIC Qt5::Core)
 
+# Copy headers for local builds
+if(QTZ_LOCAL_BUILD)
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD COMMAND 
+    ${CMAKE_COMMAND} -P 
+        "${CMAKE_CURRENT_LIST_DIR}/cmake/copy_local_includes.cmake" 
+        "${CMAKE_CURRENT_SOURCE_DIR}/include/" "core" "${QTZ_LOCAL_INCLUDES_DIR}"
+)
+endif()
+
 # Install and export
 include(GNUInstallDirs)
 
@@ -69,9 +76,11 @@ install(TARGETS ${PROJECT_NAME}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/qtz/core"
+    INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
 )
 
-install(DIRECTORY "include/" DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/qtz/core)
+install(DIRECTORY "include/" DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/qtz/core")
 
 include(CMakePackageConfigHelpers)
 
@@ -84,7 +93,6 @@ write_basic_package_version_file(
 install(EXPORT "${PROJECT_NAME}Targets"
     FILE "${PROJECT_NAME}Targets.cmake"
     DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/
-    NAMESPACE Qtz::
 )
 
 install(FILES "cmake/${PROJECT_NAME}Config.cmake" 
